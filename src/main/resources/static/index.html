@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Passwordy Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        label { display: block; margin: 8px 0; }
+        button { margin-top: 12px; }
+        #generatedPassword { font-weight: bold; margin-top: 12px; }
+    </style>
+</head>
+<body>
+<h1>Passwordy Generator</h1>
+<form id="passwordForm">
+    <label>
+        Length:
+        <input type="number" name="length" value="16" min="1">
+    </label>
+    <label>
+        Include Numbers:
+        <input type="checkbox" name="includeNumbers" checked>
+    </label>
+    <label>
+        Include Symbols:
+        <input type="checkbox" name="includeSymbols">
+    </label>
+    <button type="submit">Generate Password</button>
+</form>
+
+<h2>Generated Password:</h2>
+<p id="generatedPassword"></p>
+<button id="copyButton" style="display:none;">Copy to Clipboard</button>
+
+<script>
+    const form = document.getElementById("passwordForm");
+    const passwordDisplay = document.getElementById("generatedPassword");
+    const copyButton = document.getElementById("copyButton");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+            length: parseInt(formData.get("length")),
+            includeNumbers: formData.get("includeNumbers") === "on",
+            includeSymbols: formData.get("includeSymbols") === "on"
+        };
+
+        const response = await fetch("/api/password/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            passwordDisplay.textContent = result.password;
+            copyButton.style.display = "inline-block"; // show button
+        } else {
+            passwordDisplay.textContent = "Error generating password";
+            copyButton.style.display = "none"; // hide button
+        }
+    });
+
+    copyButton.addEventListener("click", () => {
+        const password = passwordDisplay.textContent;
+        if (!password) return;
+
+        navigator.clipboard.writeText(password)
+            .then(() => alert("Password copied to clipboard!"))
+            .catch(() => alert("Failed to copy password."));
+    });
+</script>
+</body>
+</html>
