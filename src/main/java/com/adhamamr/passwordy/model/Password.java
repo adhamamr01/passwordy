@@ -3,19 +3,37 @@ package com.adhamamr.passwordy.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "passwords")
 public class Password {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "password_value")
+    @Column(name = "label", nullable = false)
+    private String label;
+
+    @Column(name = "password_value", nullable = false)
     private String value;
+
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "url")
+    private String url;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public Password() {}
 
@@ -23,4 +41,14 @@ public class Password {
         this.value = value;
     }
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
