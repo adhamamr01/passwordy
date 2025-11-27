@@ -8,9 +8,9 @@ public interface PasswordService {
     String generatePassword(int length, boolean includeUppercase, boolean includeLowercase,
                             boolean includeNumbers, boolean includeSymbols);
 
-    PasswordResponse savePassword(PasswordSaveRequest request);
-    List<PasswordResponse> getAllPasswords();
-    PasswordResponse getPasswordById(Long id);
-    PasswordResponse updatePassword(Long id, PasswordSaveRequest request);
-    void deletePassword(Long id);
+    PasswordResponse savePassword(PasswordSaveRequest request, String username);  // Added username
+    List<PasswordResponse> getAllPasswords(String username);  // Added username
+    PasswordResponse getPasswordById(Long id, String username);  // Added username
+    PasswordResponse updatePassword(Long id, PasswordSaveRequest request, String username);  // Added username
+    void deletePassword(Long id, String username);  // Added username
 }

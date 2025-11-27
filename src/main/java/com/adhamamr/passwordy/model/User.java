@@ -8,30 +8,20 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "passwords")
-public class Password {
+@Table(name = "users")
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "label", nullable = false)
-    private String label;
-
-    @Column(name = "password_value", nullable = false)
-    private String value;
-
-    @Column(name = "username")
+    @Column(name = "username", unique = true, nullable = false)
     private String username;
 
-    @Column(name = "url")
-    private String url;
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
 
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "master_password_hash", nullable = false)
+    private String masterPasswordHash;  // BCrypt hashed password
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -39,10 +29,12 @@ public class Password {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Password() {}
+    public User() {}
 
-    public Password(String value) {
-        this.value = value;
+    public User(String username, String email, String masterPasswordHash) {
+        this.username = username;
+        this.email = email;
+        this.masterPasswordHash = masterPasswordHash;
     }
 
     @PrePersist

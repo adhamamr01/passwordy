@@ -6,6 +6,8 @@ import com.adhamamr.passwordy.dto.PasswordSaveRequest;
 import com.adhamamr.passwordy.service.PasswordService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,15 +23,17 @@ public class PasswordController {
         this.passwordService = passwordService;
     }
 
-    // Generate password endpoint
+    /**
+     * Get the username of the currently authenticated user
+     */
+    private String getAuthenticatedUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
+    // Generate password endpoint (no auth required for generation)
     @PostMapping("/password/generate")
     public Map<String, String> generatePassword(@RequestBody PasswordGenerationRequest request) {
-        System.out.println("Received request: " + request.getLength()
-                + ", uppercase=" + request.isIncludeUppercase()
-                + ", lowercase=" + request.isIncludeLowercase()
-                + ", numbers=" + request.isIncludeNumbers()
-                + ", symbols=" + request.isIncludeSymbols());
-
         String password = passwordService.generatePassword(
                 request.getLength(),
                 request.isIncludeUppercase(),
@@ -41,40 +45,45 @@ public class PasswordController {
         return Map.of("password", password);
     }
 
-    // Save password
+    // Save password (requires authentication)
     @PostMapping("/passwords")
     public ResponseEntity<PasswordResponse> savePassword(@RequestBody PasswordSaveRequest request) {
-        PasswordResponse response = passwordService.savePassword(request);
+        String username = getAuthenticatedUsername();
+        PasswordResponse response = passwordService.savePassword(request, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Get all passwords
+    // Get all passwords (requires authentication)
     @GetMapping("/passwords")
     public ResponseEntity<List<PasswordResponse>> getAllPasswords() {
-        List<PasswordResponse> passwords = passwordService.getAllPasswords();
+        String username = getAuthenticatedUsername();
+        List<PasswordResponse> passwords = passwordService.getAllPasswords(username);
         return ResponseEntity.ok(passwords);
     }
 
-    // Get password by ID
+    // Get password by ID (requires authentication)
     @GetMapping("/passwords/{id}")
     public ResponseEntity<PasswordResponse> getPasswordById(@PathVariable Long id) {
-        PasswordResponse password = passwordService.getPasswordById(id);
+        String username = getAuthenticatedUsername();
+        PasswordResponse password = passwordService.getPasswordById(id, username);
         return ResponseEntity.ok(password);
     }
 
-    // Update password
+    // Update password (requires authentication)
     @PutMapping("/passwords/{id}")
     public ResponseEntity<PasswordResponse> updatePassword(
             @PathVariable Long id,
             @RequestBody PasswordSaveRequest request) {
-        PasswordResponse updated = passwordService.updatePassword(id, request);
+        String username = getAuthenticatedUsername();
+        PasswordResponse updated = passwordService.updatePassword(id, request, username);
         return ResponseEntity.ok(updated);
     }
 
-    // Delete password
+    // Delete password (requires authentication)
     @DeleteMapping("/passwords/{id}")
     public ResponseEntity<Void> deletePassword(@PathVariable Long id) {
-        passwordService.deletePassword(id);
+        String username = getAuthenticatedUsername();
+        passwordService.deletePassword(id, username);
         return ResponseEntity.noContent().build();
     }
 }

@@ -3,10 +3,13 @@ package com.adhamamr.passwordy.service;
 import com.adhamamr.passwordy.dto.PasswordSaveRequest;
 import com.adhamamr.passwordy.dto.PasswordResponse;
 import com.adhamamr.passwordy.model.Password;
+import com.adhamamr.passwordy.model.User;
 import com.adhamamr.passwordy.repository.PasswordRepository;
+import com.adhamamr.passwordy.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +24,11 @@ public class PasswordServiceImpl implements PasswordService {
     private static final SecureRandom random = new SecureRandom();
 
     private final PasswordRepository passwordRepository;
+    private final UserRepository userRepository;
 
-    public PasswordServiceImpl(PasswordRepository passwordRepository) {
+    public PasswordServiceImpl(PasswordRepository passwordRepository, UserRepository userRepository) {
         this.passwordRepository = passwordRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -66,9 +71,6 @@ public class PasswordServiceImpl implements PasswordService {
 
     /**
      * Fisher-Yates shuffle algorithm
-     * Time Complexity: O(n)
-     * Space Complexity: O(n)
-     * Guarantees uniform distribution
      */
     private String shuffleString(String input) {
         char[] chars = input.toCharArray();
@@ -83,36 +85,58 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public PasswordResponse savePassword(PasswordSaveRequest request) {
+    public PasswordResponse savePassword(PasswordSaveRequest request, String username) {
+        // Find the user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         Password password = new Password();
         password.setLabel(request.getLabel());
         password.setValue(request.getPassword());
         password.setUsername(request.getUsername());
         password.setUrl(request.getUrl());
         password.setNotes(request.getNotes());
+        password.setUser(user);  // Link to user
 
         Password saved = passwordRepository.save(password);
         return toResponse(saved);
     }
 
     @Override
-    public List<PasswordResponse> getAllPasswords() {
+    public List<PasswordResponse> getAllPasswords(String username) {
+        // Find the user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find all passwords for this user
         return passwordRepository.findAll().stream()
+                .filter(p -> p.getUser().getId().equals(user.getId()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public PasswordResponse getPasswordById(Long id) {
+    public PasswordResponse getPasswordById(Long id, String username) {
         Password password = passwordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
+
+        // Verify the password belongs to the authenticated user
+        if (!password.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Unauthorized access to password");
+        }
+
         return toResponse(password);
     }
 
     @Override
-    public PasswordResponse updatePassword(Long id, PasswordSaveRequest request) {
+    public PasswordResponse updatePassword(Long id, PasswordSaveRequest request, String username) {
         Password password = passwordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
+
+        // Verify the password belongs to the authenticated user
+        if (!password.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Unauthorized access to password");
+        }
 
         password.setLabel(request.getLabel());
         password.setValue(request.getPassword());
@@ -125,10 +149,15 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public void deletePassword(Long id) {
-        if (!passwordRepository.existsById(id)) {
-            throw new RuntimeException("Password not found with id: " + id);
+    public void deletePassword(Long id, String username) {
+        Password password = passwordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
+
+        // Verify the password belongs to the authenticated user
+        if (!password.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Unauthorized access to password");
         }
+
         passwordRepository.deleteById(id);
     }
 
