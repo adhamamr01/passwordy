@@ -3,6 +3,9 @@ package com.adhamamr.passwordy.controller;
 import com.adhamamr.passwordy.dto.PasswordGenerationRequest;
 import com.adhamamr.passwordy.dto.PasswordResponse;
 import com.adhamamr.passwordy.dto.PasswordSaveRequest;
+import com.adhamamr.passwordy.model.Password;
+import com.adhamamr.passwordy.repository.PasswordRepository;
+import com.adhamamr.passwordy.service.EncryptionService;
 import com.adhamamr.passwordy.service.PasswordService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +21,15 @@ import java.util.Map;
 public class PasswordController {
 
     private final PasswordService passwordService;
+    private final PasswordRepository passwordRepository;  // ADD
+    private final EncryptionService encryptionService;    // ADD
 
-    public PasswordController(PasswordService passwordService) {
+    public PasswordController(PasswordService passwordService,
+                              PasswordRepository passwordRepository,    // ADD
+                              EncryptionService encryptionService) {    // ADD
         this.passwordService = passwordService;
+        this.passwordRepository = passwordRepository;      // ADD
+        this.encryptionService = encryptionService;        // ADD
     }
 
     /**
@@ -85,5 +94,35 @@ public class PasswordController {
         String username = getAuthenticatedUsername();
         passwordService.deletePassword(id, username);
         return ResponseEntity.noContent().build();
+    }
+    // Add this new endpoint to PasswordController
+
+    /**
+     * Decrypt and retrieve the actual password value
+     */
+    @PostMapping("/passwords/{id}/decrypt")
+    public ResponseEntity<Map<String, String>> decryptPassword(@PathVariable Long id) {
+        String username = getAuthenticatedUsername();
+
+        // Get the password entry
+        Password password = passwordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
+
+        // Verify ownership
+        if (!password.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Unauthorized access to password");
+        }
+
+        // Decrypt the password
+        try {
+            String decryptedPassword = encryptionService.decrypt(password.getValue());
+            return ResponseEntity.ok(Map.of(
+                    "id", password.getId().toString(),
+                    "label", password.getLabel(),
+                    "password", decryptedPassword  // Decrypted password
+            ));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt password", e);
+        }
     }
 }

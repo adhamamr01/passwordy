@@ -9,7 +9,6 @@ import com.adhamamr.passwordy.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,10 +24,14 @@ public class PasswordServiceImpl implements PasswordService {
 
     private final PasswordRepository passwordRepository;
     private final UserRepository userRepository;
+    private final EncryptionService encryptionService;  // NEW
 
-    public PasswordServiceImpl(PasswordRepository passwordRepository, UserRepository userRepository) {
+    public PasswordServiceImpl(PasswordRepository passwordRepository,
+                               UserRepository userRepository,
+                               EncryptionService encryptionService) {  // NEW
         this.passwordRepository = passwordRepository;
         this.userRepository = userRepository;
+        this.encryptionService = encryptionService;  // NEW
     }
 
     @Override
@@ -37,7 +40,6 @@ public class PasswordServiceImpl implements PasswordService {
         StringBuilder chars = new StringBuilder();
         StringBuilder password = new StringBuilder();
 
-        // Ensure at least one character from each selected type
         if (includeUppercase) {
             chars.append(UPPERCASE);
             password.append(UPPERCASE.charAt(random.nextInt(UPPERCASE.length())));
@@ -55,28 +57,21 @@ public class PasswordServiceImpl implements PasswordService {
             password.append(SYMBOLS.charAt(random.nextInt(SYMBOLS.length())));
         }
 
-        // Default to lowercase if nothing selected
         if (chars.isEmpty()) {
             chars.append(LOWERCASE);
         }
 
-        // Fill remaining length with random characters
         for (int i = password.length(); i < length; i++) {
             password.append(chars.charAt(random.nextInt(chars.length())));
         }
 
-        // Shuffle using Fisher-Yates algorithm
         return shuffleString(password.toString());
     }
 
-    /**
-     * Fisher-Yates shuffle algorithm
-     */
     private String shuffleString(String input) {
         char[] chars = input.toCharArray();
         for (int i = chars.length - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);
-            // Swap chars[i] and chars[j]
             char temp = chars[i];
             chars[i] = chars[j];
             chars[j] = temp;
@@ -86,17 +81,24 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public PasswordResponse savePassword(PasswordSaveRequest request, String username) {
-        // Find the user
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Password password = new Password();
         password.setLabel(request.getLabel());
-        password.setValue(request.getPassword());
+
+        // ENCRYPT password before saving
+        try {
+            String encryptedPassword = encryptionService.encrypt(request.getPassword());
+            password.setValue(encryptedPassword);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt password", e);
+        }
+
         password.setUsername(request.getUsername());
         password.setUrl(request.getUrl());
         password.setNotes(request.getNotes());
-        password.setUser(user);  // Link to user
+        password.setUser(user);
 
         Password saved = passwordRepository.save(password);
         return toResponse(saved);
@@ -104,11 +106,9 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public List<PasswordResponse> getAllPasswords(String username) {
-        // Find the user
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Find all passwords for this user
         return passwordRepository.findAll().stream()
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .map(this::toResponse)
@@ -120,7 +120,6 @@ public class PasswordServiceImpl implements PasswordService {
         Password password = passwordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
 
-        // Verify the password belongs to the authenticated user
         if (!password.getUser().getUsername().equals(username)) {
             throw new RuntimeException("Unauthorized access to password");
         }
@@ -133,13 +132,20 @@ public class PasswordServiceImpl implements PasswordService {
         Password password = passwordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
 
-        // Verify the password belongs to the authenticated user
         if (!password.getUser().getUsername().equals(username)) {
             throw new RuntimeException("Unauthorized access to password");
         }
 
         password.setLabel(request.getLabel());
-        password.setValue(request.getPassword());
+
+        // ENCRYPT password before updating
+        try {
+            String encryptedPassword = encryptionService.encrypt(request.getPassword());
+            password.setValue(encryptedPassword);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt password", e);
+        }
+
         password.setUsername(request.getUsername());
         password.setUrl(request.getUrl());
         password.setNotes(request.getNotes());
@@ -153,7 +159,6 @@ public class PasswordServiceImpl implements PasswordService {
         Password password = passwordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Password not found with id: " + id));
 
-        // Verify the password belongs to the authenticated user
         if (!password.getUser().getUsername().equals(username)) {
             throw new RuntimeException("Unauthorized access to password");
         }
@@ -162,10 +167,11 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     private PasswordResponse toResponse(Password password) {
+        // Return encrypted password (don't decrypt in list view for security)
         return new PasswordResponse(
                 password.getId(),
                 password.getLabel(),
-                password.getValue(),
+                password.getValue(),  // Still encrypted
                 password.getUsername(),
                 password.getUrl(),
                 password.getNotes(),
