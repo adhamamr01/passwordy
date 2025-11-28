@@ -1,36 +1,39 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!frontend/src/jsMain/**/target/
-!**/src/test/**/target/
+# Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IDE
+.idea/
 *.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!frontend/src/jsMain/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
 .vscode/
+*.swp
+*.swo
+*~
 
-### JTE ###
-/jte-classes/
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+*.env
+
+# Database
+*.db
+*.db-journal
+
+# Kotlin/Gradle (for future frontend)
+frontend/.gradle/
+frontend/build/
+frontend/gradle/
+frontend/gradlew
+frontend/gradlew.bat
+
+# Compiled
+*.class
+*.jar
+*.war
+*.ear
