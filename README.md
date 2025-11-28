@@ -1,49 +1,62 @@
-# Passwordy
+# Passwordy - Secure Password Manager
 
-A simple and secure application for generating strong passwords and storing them safely.
+A modern password management application with multi-user support and AES-256 encryption.
 
-## Features
+## 🏗️ Project Structure
 
-- **Generate Passwords**: Create strong, random passwords with customizable length and character types
-- **Save Passwords**: Store generated passwords securely
+- **backend/** - Java Spring Boot REST API
+- **frontend/** - Kotlin frontend application (coming soon)
 
-## Installation
+## 🚀 Quick Start
 
+### Backend (Spring Boot)
 ```bash
-# Clone the repository
-git clone https://github.com/adhamamr01/passwordy.git
-
-# Build the project
-./mvnw clean install
-
-# Run the application
+cd backend
 ./mvnw spring-boot:run
 ```
 
-## Usage
+The API will be available at: `http://localhost:8080`
 
-1. Generate a password with your desired settings
-2. Save the generated password with a label/name
+### Frontend (Coming Soon)
 
-## Security
+The frontend is currently under development.
 
-- AES-256 encryption for stored passwords
-- Master password protection
-- No cloud storage - everything stays local
-- Biometric authentication support
+## 🔒 Security Features
 
-## Tech Stack
+- ✅ Multi-user authentication with JWT
+- ✅ BCrypt password hashing for master passwords
+- ✅ AES-256-GCM encryption for stored passwords
+- ✅ User isolation (users can only access their own passwords)
+- ✅ Secure password generation with SecureRandom
 
-- Kotlin
-- Java Spring Boot
-- Maven
+## 📚 API Documentation
+
+API is available at: `http://localhost:8080/api`
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login and get JWT token
+
+### Password Endpoints (Requires Authentication)
+- `POST /api/password/generate` - Generate random password
+- `POST /api/passwords` - Save password
+- `GET /api/passwords` - Get all passwords
+- `GET /api/passwords/{id}` - Get password by ID
+- `POST /api/passwords/{id}/decrypt` - Decrypt password
+- `PUT /api/passwords/{id}` - Update password
+- `DELETE /api/passwords/{id}` - Delete password
+
+## 🛠️ Tech Stack
+
+### Backend
+- Java 17+
+- Spring Boot 3.x
+- Spring Security with JWT
+- JPA/Hibernate
 - PostgreSQL / H2 Database
-- BCrypt for password encryption
+- Maven
 
-## License
+### Frontend (Planned)
+- Kotlin
+- (To be determined)
 
-MIT License
-
----
-
-**Note**: Remember your master password - it cannot be recovered!
