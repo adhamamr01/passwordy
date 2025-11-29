@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.passwordy</groupId>
-	<artifactId>passwordy</artifactId>
+	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>passwordy</name>
 	<description>Password generator project for Spring Boot</description>
