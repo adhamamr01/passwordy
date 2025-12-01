@@ -5,9 +5,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PasswordGenerationRequest {
-    private int length = 12;
-    private boolean includeUppercase = true;  // NEW
-    private boolean includeLowercase = true;  // NEW
-    private boolean includeNumbers = true;
+    private int length = 16;
     private boolean includeSymbols = true;
 }

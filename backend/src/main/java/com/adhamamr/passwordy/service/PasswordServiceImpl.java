@@ -35,31 +35,29 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public String generatePassword(int length, boolean includeUppercase, boolean includeLowercase,
-                                   boolean includeNumbers, boolean includeSymbols) {
+    public String generatePassword(int length, boolean includeSymbols) {
+        // Validate minimum length
+        if (length < 8) {
+            throw new IllegalArgumentException("Password length must be at least 8 characters");
+        }
+
         StringBuilder chars = new StringBuilder();
+        chars.append(UPPERCASE);
+        chars.append(LOWERCASE);
+        chars.append(NUMBERS);
+
         StringBuilder password = new StringBuilder();
 
-        if (includeUppercase) {
-            chars.append(UPPERCASE);
-            password.append(UPPERCASE.charAt(random.nextInt(UPPERCASE.length())));
-        }
-        if (includeLowercase) {
-            chars.append(LOWERCASE);
-            password.append(LOWERCASE.charAt(random.nextInt(LOWERCASE.length())));
-        }
-        if (includeNumbers) {
-            chars.append(NUMBERS);
-            password.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
-        }
+        password.append(UPPERCASE.charAt(random.nextInt(UPPERCASE.length())));
+        password.append(LOWERCASE.charAt(random.nextInt(LOWERCASE.length())));
+        password.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
+
+
         if (includeSymbols) {
             chars.append(SYMBOLS);
             password.append(SYMBOLS.charAt(random.nextInt(SYMBOLS.length())));
         }
 
-        if (chars.isEmpty()) {
-            chars.append(LOWERCASE);
-        }
 
         for (int i = password.length(); i < length; i++) {
             password.append(chars.charAt(random.nextInt(chars.length())));
@@ -98,6 +96,7 @@ public class PasswordServiceImpl implements PasswordService {
         password.setUsername(request.getUsername());
         password.setUrl(request.getUrl());
         password.setNotes(request.getNotes());
+        password.setCategory(request.getCategory());
         password.setUser(user);
 
         Password saved = passwordRepository.save(password);
@@ -149,6 +148,7 @@ public class PasswordServiceImpl implements PasswordService {
         password.setUsername(request.getUsername());
         password.setUrl(request.getUrl());
         password.setNotes(request.getNotes());
+        password.setCategory(request.getCategory());
 
         Password updated = passwordRepository.save(password);
         return toResponse(updated);
@@ -175,8 +175,28 @@ public class PasswordServiceImpl implements PasswordService {
                 password.getUsername(),
                 password.getUrl(),
                 password.getNotes(),
+                password.getCategory(),
                 password.getCreatedAt(),
                 password.getUpdatedAt()
         );
+    }
+    @Override
+    public String generatePin(int length) {
+        // Validate minimum length
+        if (length < 4) {
+            throw new IllegalArgumentException("PIN length must be at least 4 digits");
+        }
+
+        if (length > 12) {
+            throw new IllegalArgumentException("PIN length cannot exceed 12 digits");
+        }
+
+        StringBuilder pin = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            pin.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
+        }
+
+        return pin.toString();
     }
 }

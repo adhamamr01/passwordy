@@ -11,4 +11,5 @@ public class PasswordSaveRequest {
     private String username;
     private String url;
     private String notes;
+    private String category;
 }

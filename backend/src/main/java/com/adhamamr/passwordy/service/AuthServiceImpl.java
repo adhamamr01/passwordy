@@ -6,6 +6,7 @@ import com.adhamamr.passwordy.dto.RegisterRequest;
 import com.adhamamr.passwordy.model.User;
 import com.adhamamr.passwordy.repository.UserRepository;
 import com.adhamamr.passwordy.security.JwtUtil;
+import com.adhamamr.passwordy.util.MasterPasswordValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
+        // Validate master password
+        MasterPasswordValidator.ValidationResult validation =
+                MasterPasswordValidator.validate(request.getMasterPassword());
+
+        if (!validation.isValid()) {
+            throw new RuntimeException(validation.getErrorMessage());
+        }
+
         // Check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -55,7 +64,6 @@ public class AuthServiceImpl implements AuthService {
                 "User registered successfully"
         );
     }
-
     @Override
     public AuthResponse login(LoginRequest request) {
         // Find user by username

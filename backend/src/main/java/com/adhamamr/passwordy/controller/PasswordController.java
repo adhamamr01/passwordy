@@ -3,6 +3,7 @@ package com.adhamamr.passwordy.controller;
 import com.adhamamr.passwordy.dto.PasswordGenerationRequest;
 import com.adhamamr.passwordy.dto.PasswordResponse;
 import com.adhamamr.passwordy.dto.PasswordSaveRequest;
+import com.adhamamr.passwordy.dto.PinGenerationRequest;
 import com.adhamamr.passwordy.model.Password;
 import com.adhamamr.passwordy.repository.PasswordRepository;
 import com.adhamamr.passwordy.service.EncryptionService;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -45,9 +47,6 @@ public class PasswordController {
     public Map<String, String> generatePassword(@RequestBody PasswordGenerationRequest request) {
         String password = passwordService.generatePassword(
                 request.getLength(),
-                request.isIncludeUppercase(),
-                request.isIncludeLowercase(),
-                request.isIncludeNumbers(),
                 request.isIncludeSymbols()
         );
 
@@ -124,5 +123,26 @@ public class PasswordController {
         } catch (Exception e) {
             throw new RuntimeException("Failed to decrypt password", e);
         }
+    }
+
+    @GetMapping("/password/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        // can modify these categories later adham
+        List<String> categories = Arrays.asList(
+                "Social Media",
+                "Banking",
+                "Email",
+                "Work",
+                "Shopping",
+                "Entertainment",
+                "Other"
+        );
+        return ResponseEntity.ok(categories);
+    }
+
+    @PostMapping("/password/generate-pin")
+    public Map<String, String> generatePin(@RequestBody PinGenerationRequest request) {
+        String pin = passwordService.generatePin(request.getLength());
+        return Map.of("pin", pin);
     }
 }

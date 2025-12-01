@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()  // Allow register/login without auth
-                        .requestMatchers("/api/password/generate").permitAll()  // Password generation (public)
+                        .requestMatchers("/api/password/generate**").permitAll()  // Password generation (public)
                         .anyRequest().authenticated()  // All other endpoints require authentication
                 )
                 .sessionManagement(session -> session
