@@ -1,12 +1,6 @@
 package com.adhamamr.passwordy.data.network
 
-import com.adhamamr.passwordy.data.model.AuthResponse
-import com.adhamamr.passwordy.data.model.GeneratedPasswordResponse
-import com.adhamamr.passwordy.data.model.LoginRequest
-import com.adhamamr.passwordy.data.model.PasswordGenerationRequest
-import com.adhamamr.passwordy.data.model.PasswordRequest
-import com.adhamamr.passwordy.data.model.PasswordResponse
-import com.adhamamr.passwordy.data.model.RegisterRequest
+import com.adhamamr.passwordy.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -20,6 +14,12 @@ interface ApiService {
 
     @POST("api/password/generate")
     suspend fun generatePassword(@Body request: PasswordGenerationRequest): Response<GeneratedPasswordResponse>
+
+    @POST("api/password/generate-pin")
+    suspend fun generatePin(@Body request: PinGenerationRequest): Response<GeneratedPinResponse>
+
+    @GET("api/password/categories")
+    suspend fun getCategories(): Response<List<String>>
 
     @GET("api/passwords")
     suspend fun getAllPasswords(@Header("Authorization") token: String): Response<List<PasswordResponse>>
