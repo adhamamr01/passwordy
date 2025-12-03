@@ -5,5 +5,6 @@ data class PasswordRequest(
     val password: String,
     val username: String?,
     val url: String?,
+    val category: String?,
     val notes: String?
 )

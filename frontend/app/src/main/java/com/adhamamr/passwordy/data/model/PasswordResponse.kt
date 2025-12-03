@@ -7,6 +7,7 @@ data class PasswordResponse(
     val username: String?,
     val url: String?,
     val notes: String?,
+    val category: String?,
     val createdAt: String,
     val updatedAt: String
 )
