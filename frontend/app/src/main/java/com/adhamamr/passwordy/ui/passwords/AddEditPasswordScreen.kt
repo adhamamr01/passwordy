@@ -51,6 +51,12 @@ fun AddEditPasswordScreen(
     val saveState by viewModel.saveState.collectAsState()
     val detailState by viewModel.detailState.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val snackbarController = remember {
+        com.adhamamr.passwordy.ui.common.SnackbarController(snackbarHostState, scope)
+    }
+
     // Load password if editing
     LaunchedEffect(passwordId) {
         if (passwordId != null) {
@@ -80,9 +86,21 @@ fun AddEditPasswordScreen(
 
     // Handle save success
     LaunchedEffect(saveState) {
-        if (saveState is SaveState.Success) {
-            viewModel.resetSaveState()
-            onNavigateBack()
+        when (saveState) {
+            is SaveState.Success -> {
+                snackbarController.showSuccessSnackbar(
+                    if (passwordId == null) "Password saved successfully"
+                    else "Password updated successfully"
+                )
+                viewModel.resetSaveState()
+                onNavigateBack()
+            }
+            is SaveState.Error -> {
+                snackbarController.showErrorSnackbar(
+                    (saveState as SaveState.Error).message
+                )
+            }
+            else -> {}
         }
     }
 
@@ -96,7 +114,8 @@ fun AddEditPasswordScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -245,14 +264,7 @@ fun AddEditPasswordScreen(
                 }
             }
 
-            // Error message
-            if (saveState is SaveState.Error) {
-                Text(
-                    text = (saveState as SaveState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            // Remove the old error message display since we're using snackbar now
         }
     }
 

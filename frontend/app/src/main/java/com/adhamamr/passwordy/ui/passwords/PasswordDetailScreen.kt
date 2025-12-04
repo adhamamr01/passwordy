@@ -42,6 +42,12 @@ fun PasswordDetailScreen(
     val decryptState by viewModel.decryptState.collectAsState()
     val deleteState by viewModel.deleteState.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val snackbarController = remember {
+        com.adhamamr.passwordy.ui.common.SnackbarController(snackbarHostState, scope)
+    }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var decryptedPassword by remember { mutableStateOf<String?>(null) }
 
@@ -50,19 +56,38 @@ fun PasswordDetailScreen(
         viewModel.loadPasswordById(passwordId)
     }
 
-    // Handle decrypt success
+    // Handle decrypt success/error
     LaunchedEffect(decryptState) {
-        if (decryptState is DecryptState.Success) {
-            decryptedPassword = (decryptState as DecryptState.Success).decryptedPassword
+        when (decryptState) {
+            is DecryptState.Success -> {
+                decryptedPassword = (decryptState as DecryptState.Success).decryptedPassword
+                snackbarController.showSuccessSnackbar("Password decrypted")
+            }
+            is DecryptState.Error -> {
+                snackbarController.showErrorSnackbar(
+                    (decryptState as DecryptState.Error).message,
+                    onRetry = { viewModel.decryptPassword(passwordId) }
+                )
+            }
+            else -> {}
         }
     }
 
-    // Handle delete success
+    // Handle delete success/error
     LaunchedEffect(deleteState) {
-        if (deleteState is DeleteState.Success) {
-            Toast.makeText(context, "Password deleted", Toast.LENGTH_SHORT).show()
-            viewModel.resetDeleteState()
-            onNavigateBack()
+        when (deleteState) {
+            is DeleteState.Success -> {
+                snackbarController.showSuccessSnackbar("Password deleted")
+                viewModel.resetDeleteState()
+                onNavigateBack()
+            }
+            is DeleteState.Error -> {
+                snackbarController.showErrorSnackbar(
+                    (deleteState as DeleteState.Error).message
+                )
+                viewModel.resetDeleteState()
+            }
+            else -> {}
         }
     }
 
@@ -86,7 +111,8 @@ fun PasswordDetailScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -226,15 +252,7 @@ fun PasswordDetailScreen(
                                     }
                                 }
 
-                                // Decrypt error
-                                if (decryptState is DecryptState.Error) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = (decryptState as DecryptState.Error).message,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
+                                // Remove the old decrypt error display
                             }
                         }
 
@@ -362,17 +380,7 @@ fun PasswordDetailScreen(
         )
     }
 
-    // Delete error snack bar
-    if (deleteState is DeleteState.Error) {
-        LaunchedEffect(deleteState) {
-            Toast.makeText(
-                context,
-                (deleteState as DeleteState.Error).message,
-                Toast.LENGTH_LONG
-            ).show()
-            viewModel.resetDeleteState()
-        }
-    }
+    // Remove the old delete error handling with Toast
 }
 
 @Composable
