@@ -66,8 +66,10 @@ class PasswordRepository(
         val token = getAuthToken()
         val response = apiService.decryptPassword("Bearer $token", id)
         if (response.isSuccessful && response.body() != null) {
-            return response.body()!!["decryptedPassword"]
-                ?: throw Exception("Decrypted password not found in response")
+            val body = response.body()!!
+            // Backend returns "password" key with the decrypted password
+            return body["password"]
+                ?: throw Exception("Password key not found in decrypt response")
         } else {
             throw Exception("Failed to decrypt password: ${response.message()}")
         }
